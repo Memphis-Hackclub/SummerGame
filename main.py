@@ -36,6 +36,10 @@ class MyGame(arcade.Window):
 		if symbol == arcade.key.A:
 			self.left = False
 
+
+	def on_mouse_press(self, x, y, button, modifiers):
+		if button == arcade.MOUSE_BUTTON_LEFT:
+			self.MyTerain.destroy_block(x,y)
 	
 
 def main():
