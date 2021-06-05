@@ -9,7 +9,6 @@ class MyTerain():
 
 		self.window_width = window_width
 		self.window_height = window_height
-		self.world_list_complied = []
 		self.world_list_uncomplied = arcade.SpriteList(use_spatial_hash=True)
 		self.whole_world = []
 		self.world_seed = random.randint(0,9999)*random.randint(0,9999)
@@ -41,7 +40,7 @@ class MyTerain():
 				grid[row] = 2
 
 	def trasnform_id_sprite(self, grid, grid_height, x=None):
-		world_list_complied =  arcade.SpriteList(use_spatial_hash=True)
+		world_list =  arcade.SpriteList(use_spatial_hash=True)
 		height = len(grid)
 		
 		for row in range(height):
@@ -49,35 +48,33 @@ class MyTerain():
 					block = arcade.Sprite("Textures/Tile/dirt.png", scale = self.sprite_size/16)
 					block.center_x = (x*self.sprite_size) + int(self.sprite_size/2)
 					block.center_y = row * self.sprite_size + int(self.sprite_size /2)
-					world_list_complied.append(block)
+					world_list.append(block)
 				if grid[row] == 2:
 					block = arcade.Sprite("Textures/Tile/grass.png", scale = self.sprite_size/16)
 					block.center_x = (x*self.sprite_size) + int(self.sprite_size/2)
 					block.center_y = row * self.sprite_size + int(self.sprite_size /2)
-					world_list_complied.append(block)
-		return world_list_complied
+					world_list.append(block)
+		return world_list
 
 	def create_left_row(self):
 		grid = self.create_colume(self.grid_height)
 		self.initialize_colume(grid, x=(self.world_seed+self.left_bound))
-		self.world_list_complied.insert(0, self.trasnform_id_sprite(grid, self.grid_height, x=int(self.left_bound)))
 		self.whole_world.insert(0,[self.left_bound,self.trasnform_id_sprite(grid, self.grid_height, x=int(self.left_bound))])
 		self.left_bound -= 1 
 	def create_right_row(self):
 		grid = self.create_colume(self.grid_height)
 		self.initialize_colume(grid, x=self.world_seed+self.right_bound)
-		self.world_list_complied.append(self.trasnform_id_sprite(grid, self.grid_height, x=int(self.right_bound)))
 		self.whole_world.append([self.right_bound,self.trasnform_id_sprite(grid, self.grid_height, x=int(self.right_bound))])
 		self.right_bound+=1
 
 	def load_unload_chunks(self, player_x):
+	
 		if player_x - (self.render_distence*16) <= (self.left_bound)*self.sprite_size:
 			load = self.find_if_already_loaded(self.left_bound)
 			
 			if load == False:
 				self.create_left_row()
 			else: 
-				self.world_list_complied.insert(0,load)
 				self.left_bound -= 1
 			self.uncomplie_world_list()
 		if player_x + (self.render_distence*16) >= (self.right_bound)*self.sprite_size:
@@ -85,31 +82,42 @@ class MyTerain():
 			if load == False:
 				self.create_right_row()
 			else: 
-				self.world_list_complied.append(load)
 				self.right_bound+=1 
 			self.uncomplie_world_list()
 		if player_x - (self.render_distence*16) >= (self.left_bound)*self.sprite_size:
-			self.world_list_complied.pop(0)
 			self.left_bound += 1
 			self.uncomplie_world_list()
 		if player_x + (self.render_distence*16) <= (self.right_bound)*self.sprite_size:
-			self.world_list_complied.pop(-1)
 			self.right_bound -= 1
 			self.uncomplie_world_list()
 
 	def uncomplie_world_list(self):
 		self.world_list_uncomplied = arcade.SpriteList(use_spatial_hash=True)
-		for i in range(len(self.world_list_complied)):
-			for l in range(len(self.world_list_complied[i])):
-				self.world_list_uncomplied.append(self.world_list_complied[i][l])
+		for i in range(self.left_bound-self.whole_world[0][0], self.right_bound-self.whole_world[0][0]):
+			for l in range(len(self.whole_world[i][1])):
+				self.world_list_uncomplied.append(self.whole_world[i][1][l])
 	def find_if_already_loaded(self, x):
 		if len(self.whole_world) > 0:
 			left_most_x = self.whole_world[0][0] 
-			point_in_list = abs(left_most_x-abs(x)-1)
+			point_in_list = x-left_most_x
+			
 			if len(self.whole_world) > point_in_list and point_in_list >= 0:
 				return self.whole_world[point_in_list][1]
 	
-		return False		
+		return False
+
+	def destroy_block(self, mouse_x, mouse_y):
+		left_most_x = self.whole_world[0][0] 
+		point_in_list = int(mouse_x/self.sprite_size)-left_most_x
+		print(point_in_list)
+		print(len(self.whole_world))
+		if len(self.whole_world) > 0:
+			block = arcade.get_sprites_at_point(((self.whole_world[point_in_list][1][0].center_x), mouse_y), self.whole_world[point_in_list][1])
+			if len(block) > 0:
+				self.whole_world[point_in_list][1].remove(block[0])
+
+
+		
 		
 def perlin(x, scale,seed,smoothness):
 	x = (x * smoothness)+seed 
